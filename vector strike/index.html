@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#0b111b" />
+  <meta name="description" content="VECTOR STRIKE — FPS tático 3D multiplayer, direto no navegador." />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <title>VECTOR STRIKE — Tactical Browser FPS</title>
+</head>
+<body>
+<div id="app">
+  <div id="viewport"></div>
+  <div id="world-vignette" aria-hidden="true"></div>
+  <div id="damage-flash" class="damage-flash" aria-hidden="true"></div>
+
+  <header class="game-header" id="game-header">
+    <div class="brand-mini"><span class="brand-mark">V<span class="brand-slash">/</span></span><span>VECTOR<span class="text-accent">STRIKE</span></span><span class="version-pill">ALPHA 1.9</span></div>
+    <div class="match-center">
+      <div class="score-box attackers"><span>ATACANTES</span><b id="score-a">0</b></div>
+      <div class="round-timer"><span id="phase-label">AGUARDANDO</span><strong id="timer">--:--</strong><small id="round-label">ROUND 00</small></div>
+      <div class="score-box defenders"><b id="score-d">0</b><span>DEFENSORES</span></div>
+    </div>
+    <div class="room-head"><span id="training-header" class="training-pill hidden">TREINO COM BOTS</span><span class="online-dot"></span><span id="net-stats" class="net-stats" aria-label="Latência e FPS">-- MS</span><span id="room-head-label">SALA -----</span><button id="copy-room" title="Copiar convite" aria-label="Copiar convite">⧉</button></div>
+  </header>
+
+  <div class="minimap-panel" id="minimap-panel"><div class="mini-heading"><span>COMPLEXO ÍRIS // A + B</span><span class="mini-coordinate">N ↑</span></div><canvas id="minimap" width="220" height="180"></canvas><div class="mini-footer"><span class="dot attack"></span> ATAQUE <span class="dot defend"></span> DEFESA <span class="dot objective"></span> SITES A / B</div></div>
+  <div id="killfeed" class="killfeed"></div>
+  <div id="notification" class="notification hidden"></div>
+  <div id="crosshair" class="crosshair"><span class="cross-x"></span><span class="cross-y"></span><span class="cross-z"></span><span class="cross-w"></span><i></i></div>
+  <div id="scope-view" class="scope-view" aria-hidden="true"><span class="scope-line scope-h"></span><span class="scope-line scope-v"></span><span class="scope-center"></span></div>
+  <div id="hitmarker" class="hitmarker"></div>
+
+  <div id="objective-banner" class="objective-banner"><span class="objective-symbol">◈</span><div><b id="objective-title">ELIMINE A EQUIPE INIMIGA</b><small id="objective-desc">Proteja sua equipe e jogue pelo objetivo</small></div></div>
+  <div id="interaction" class="interaction hidden"><span class="keycap">E</span><div class="interaction-body"><strong id="interaction-text">PLANTAR BOMBA</strong><div class="progress-bg"><div id="interaction-progress"></div></div></div></div>
+  <div id="death-banner" class="death-banner hidden"><span>VOCÊ FOI ELIMINADO</span><small>Assista aos aliados · TAB para placar</small></div>
+  <div id="spectator-banner" class="spectator-banner hidden"><span>OBSERVANDO ALIADO</span><b id="spectate-name">—</b><small>← / → TROCAR JOGADOR</small></div>
+  <div id="round-banner" class="round-banner hidden"><small id="round-eyebrow">RESULTADO</small><strong id="round-title">VITÓRIA</strong><p id="round-subtitle"></p></div>
+
+  <div id="bottom-hud" class="bottom-hud">
+    <div class="health-card"><div class="hud-icon">✚</div><div><span>INTEGRIDADE</span><div class="vitals"><b id="health-number">100</b><small>HP</small></div></div><div class="health-line"><i id="health-fill"></i></div><div class="armor-indicator">◈ ARMADURA <strong id="armor-number">0</strong></div></div>
+    <div class="bottom-middle"><div class="economy-hud"><span>SEU SALDO</span><strong id="credits-hud">¤ 800</strong><button id="buy-quick" class="buy-quick hidden">B &nbsp; ABRIR LOJA</button></div><div class="mode-pills"><span class="pill">5 ROUNDS PARA VENCER</span><span id="role-pill" class="pill role">ATACANTE</span></div><div class="controls-tip">WASD MOVER • ESPAÇO PULAR • B LOJA • 1/2 ARMAS • R RECARREGAR • BOTÃO DIREITO MIRAR • E BOMBA • TAB PLACAR</div></div>
+    <div class="ammo-card"><div class="ammo-label"><span id="weapon-label">P320</span><span id="reload-label"></span></div><div class="ammo-values"><strong id="ammo-number">12</strong><span>/</span><b id="reserve-number">36</b><div class="bullet-icon">▰▰▰</div></div></div>
+  </div>
+
+  <div id="scoreboard" class="scoreboard hidden"><div class="scoreboard-inner"><div class="scoreboard-title">PLACAR <span>VECTOR STRIKE / COMPLEXO ÍRIS</span></div><div id="scoreboard-content"></div><div class="scoreboard-footer">TAB PARA FECHAR</div></div></div>
+
+  <section id="buy-overlay" class="buy-overlay hidden" aria-label="Loja de equipamentos do round">
+    <div class="buy-shell">
+      <div class="buy-head">
+        <div class="buy-title"><span class="tiny-overline">VECTOR STRIKE // ARSENAL</span><h2>FASE DE <em>COMPRA</em></h2><p>Monte seu equipamento. As compras são confirmadas pelo servidor.</p></div>
+        <div class="buy-round"><span>ROUND <b id="buy-round">01</b></span><strong id="buy-timer">00:30</strong><small>ATÉ O INÍCIO</small></div>
+        <div class="buy-wallet"><span>CRÉDITOS DISPONÍVEIS</span><strong id="buy-credits">¤ 800</strong><small>LIMITE ¤ 9.000</small></div>
+      </div>
+      <div class="buy-body">
+        <aside class="buy-sidebar">
+          <div class="buy-aside-heading">SEU EQUIPAMENTO</div>
+          <div class="buy-equipped-row"><span>PRINCIPAL</span><b id="buy-owned-primary">SEM ARMA</b><button data-refund-slot="primary" class="refund-button hidden">REEMBOLSAR</button></div>
+          <div class="buy-equipped-row"><span>SECUNDÁRIA</span><b id="buy-owned-sidearm">P320</b><button data-refund-slot="sidearm" class="refund-button hidden">REEMBOLSAR</button></div>
+          <div class="buy-equipped-row"><span>PROTEÇÃO</span><b id="buy-owned-armor">SEM COLETE</b><button data-refund-slot="armor" class="refund-button hidden">REEMBOLSAR</button></div>
+          <div class="buy-aside-heading second">RECOMPENSAS</div>
+          <div class="buy-incomes"><div><span>VITÓRIA</span><b>+¤ 3.000</b></div><div><span>DERROTA</span><b>+¤ 1.900–2.900</b></div><div><span>ELIMINAÇÃO</span><b>+¤ 200</b></div><div><span>OBJETIVO</span><b>+¤ 300</b></div></div>
+          <p class="buy-sidebar-note">Armas e armadura são conservadas se você sobreviver ao round. Reembolso apenas para compras desta fase.</p>
+        </aside>
+        <div class="buy-catalog" id="shop-list"></div>
+        <aside class="buy-detail" id="shop-detail"><span class="tiny-overline">DETALHES DO EQUIPAMENTO</span><h3>MDR</h3></aside>
+      </div>
+      <footer class="buy-footer"><div class="buy-tip"><span class="keycap">B</span> ABRIR / FECHAR LOJA <span>•</span> CONFIRME ANTES DO CRONÔMETRO ZERAR</div><button id="training-start-buy" class="training-start-buy hidden" type="button">▶ COMEÇAR COMBATE AGORA</button><button id="close-buy" class="buy-close">PRONTO PARA O ROUND <span>↗</span></button></footer>
+    </div>
+  </section>
+
+  <div id="pause-overlay" class="pause-overlay hidden"><div class="pause-card"><span class="tiny-overline">SALA <span id="pause-room">-----</span></span><div class="pause-icon">⌖</div><h2>VOLTE AO COMBATE</h2><p>Clique para ativar o mouse e controlar seu personagem.</p>
+      <button id="resume" class="btn-primary">RETOMAR PARTIDA <span>↗</span></button><div class="training-pause-actions hidden" id="training-actions"><button id="training-start-pause" type="button">▶ INICIAR ROUND</button><button id="training-reset" type="button">↻ REINICIAR TREINO (K)</button><small>Bots e progresso são exclusivos desta sala de treino.</small></div><button id="return-party" class="party-return hidden" type="button">↩ VOLTAR AO LOBBY</button><button id="pause-buy" class="pause-buy hidden">B &nbsp; ESCOLHER ARMAS E EQUIPAMENTOS</button>
+      <details class="settings-panel">
+        <summary>⚙ AJUSTES DE JOGO <span>⌄</span></summary>
+        <div class="setting-row"><label for="setting-sensitivity">Sensibilidade <output id="sensitivity-value">1.00×</output></label><input type="range" id="setting-sensitivity" min="0.35" max="2.5" step="0.05" value="1"></div>
+        <div class="setting-row"><label for="setting-volume">Volume dos efeitos <output id="volume-value">65%</output></label><input type="range" id="setting-volume" min="0" max="1" step="0.05" value="0.65"></div>
+        <div class="setting-grid"><label>Gráficos<select id="setting-graphics"><option value="low">Leve</option><option value="standard" selected>Padrão</option><option value="high">Alta</option></select></label><label>Cor da mira<select id="setting-crosshair"><option value="mint">Verde</option><option value="white">Branca</option><option value="orange">Laranja</option></select></label></div>
+        <label class="setting-toggle"><input type="checkbox" id="setting-fps"> Mostrar FPS</label>
+        <span class="setting-note">As preferências são salvas neste navegador.</span>
+      </details>
+      <small>ESC libera o cursor do mouse • F inspeciona a arma</small></div></div>
+
+  <div id="menu-overlay" class="menu-overlay">
+    <div class="menu-noise"></div>
+    <div class="menu-top"><div class="menu-brand"><div class="menu-brand-icon">V<span>/</span></div><span>VECTOR <b>STRIKE</b></span></div><div class="alpha-badge"><span class="online-dot"></span> CENTRAL DE JOGO <b>V1.8</b></div></div>
+    <div class="menu-layout">
+      <section class="hero"><div class="hero-eyebrow"><span class="line"></span> FPS TÁTICO • MULTIPLAYER 3D</div><h1>DOMINE<br/>O <em>ROUND.</em></h1><p>Prepare sua equipe, escolha seu arsenal e domine cada round. O lobby social agora tem cartões de jogadores, convites rápidos e uma interface renovada. Tudo direto no navegador.</p><div class="feature-row"><span>◈ BOMBA / DESARME</span><span>◎ ATÉ 6 JOGADORES</span><span>⌖ PARTIDAS PRIVADAS</span></div><div class="hero-meta">COMPLEXO ÍRIS <span>•</span> OPERAÇÃO DE TESTE <span>•</span> SEM INSTALAÇÃO</div></section>
+      <aside class="lobby-card"><div class="lobby-topline"><span>INICIAR OPERAÇÃO</span><span class="lobby-number">01 / 01</span></div><h2>ESCOLHA SEU<br/>PRÓXIMO COMBATE.</h2><label for="nickname">CODINOME</label><input id="nickname" maxlength="17" placeholder="Seu nome no jogo" autocomplete="nickname" />
+        <div id="lobby-entry">
+          <button id="enable-lobby" class="btn-primary lobby-action lobby-go" type="button">◈ JOGAR COM AMIGOS <span>↗</span></button>
+          <p class="lobby-hint">Crie seu grupo, convide os amigos e organize a partida na nova central multiplayer.</p>
+        <div class="choice-label">TREINAR SOZINHO</div>
+        <div class="training-create">
+          <div class="training-create-heading"><b>CAMPO DE TREINO COM BOTS</b><span>SOLO • SERVIDOR LOCAL</span></div>
+          <div class="training-selects"><label for="training-bot-count">QUANTIDADE<select id="training-bot-count"><option value="1">1 bot</option><option value="2" selected>2 bots</option><option value="3">3 bots</option><option value="4">4 bots</option></select></label><label for="training-difficulty">DIFICULDADE<select id="training-difficulty"><option value="easy">Fácil</option><option value="normal" selected>Normal</option><option value="hard">Difícil</option></select></label></div>
+          <button id="create-training" class="training-create-btn" type="button">⌖ CRIAR TREINO COM BOTS <span>↗</span></button>
+          <p>Teste armas, mira, dano e movimentação sem outro jogador. Você recebe <b>¤ 9.000 por round</b>. Pressione <b>K</b> para reiniciar.</p>
+        </div>
+        <div class="choice-label">CRIAR PARTIDA MULTIPLAYER</div><button class="btn-primary lobby-action" id="create-room">CRIAR SALA PRIVADA <span>↗</span></button>
+        <div class="separator"><i></i><span>OU ENTRE COM UM CÓDIGO</span><i></i></div><label for="room-code">CÓDIGO DA SALA</label><div class="join-row"><input id="room-code" maxlength="5" placeholder="EX: X7K2P" autocapitalize="characters" /><button id="join-room" aria-label="Entrar na sala">ENTRAR →</button></div>
+        </div>
+<div class="lobby-info"><span class="online-dot"></span> SERVIDOR EM TEMPO REAL <span>•</span> BOTS OU MULTIPLAYER</div>
+      </aside>
+    </div>
+
+    <section id="party-hub" class="party-hub hidden" aria-label="Central do grupo">
+      <div class="party-topbar">
+        <div class="party-location"><span class="party-route">JOGAR <span> / </span> MULTIPLAYER</span><h1>SEU GRUPO <small>LOBBY PRIVADO</small></h1></div>
+        <div class="party-top-right"><span class="party-presence"><span class="online-dot"></span> CONECTADO AO SERVIDOR</span><span class="party-privacy">◈ GRUPO POR CONVITE</span></div>
+      </div>
+      <div id="party-invites" class="party-invites hidden" aria-live="polite"></div>
+      <div class="party-view-grid">
+        <aside class="party-side party-side-left">
+          <div class="party-aside-title">CENTRAL DO JOGADOR <span>01</span></div>
+          <div class="party-account">
+            <div class="party-account-avatar" id="party-me-avatar">V</div>
+            <div><small>OPERADOR CONECTADO</small><strong id="party-me-name">JOGADOR</strong><span><i class="online-dot"></i> ONLINE</span></div>
+          </div>
+          <div class="party-side-divider"></div>
+          <div class="party-aside-title">MODO DE JOGO</div>
+          <div class="party-mode-card"><span class="party-mode-symbol">⌖</span><div><small>SELECIONADO</small><strong>PARTIDA TÁTICA</strong><span>COMPLEXO ÍRIS · BOMBA / DESARME</span></div></div>
+          <div class="party-stat-strip"><span>MAPA ATUAL</span><b>DEPÓSITO</b></div>
+          <div class="party-stat-strip"><span>FORMATO</span><b>ATÉ 3 VS 3</b></div>
+          <div class="party-side-divider"></div>
+          <div class="party-aside-title">SEU GRUPO</div>
+          <div class="party-status"><span class="online-dot"></span><span id="party-status">CONECTADO</span><span id="party-size">1 / 6</span></div>
+          <p class="party-sidebar-help">O líder pode iniciar quando todos estiverem prontos e houver jogadores dos dois lados.</p>
+          <button id="party-leave" class="party-leave" type="button">↩ SAIR DO GRUPO</button>
+        </aside>
+        <main class="party-stage">
+          <div class="party-stage-head"><div><span class="party-section-kicker">EQUIPE DE OPERAÇÃO</span><h2>FORME SUA EQUIPE<span>.</span></h2></div><div class="party-stage-count"><strong id="party-stage-count">1 / 6</strong><small>JOGADORES</small></div></div>
+          <div class="party-stage-rule"><span>ATAQUE <i></i> DEFESA</span><span>◈ CARTÕES DE OPERADOR</span></div>
+          <div id="party-members" class="party-members" aria-label="Integrantes do grupo"></div>
+          <div class="party-action-area">
+            <div class="party-action-status"><span class="party-action-indicator"></span><p id="party-requirements">Convide alguém e marque PRONTO para começar.</p></div>
+            <div class="party-actions"><button id="party-team" type="button" class="party-team">⇄ TROCAR TIME</button><button id="party-ready" type="button" class="party-ready">✓ MARCAR PRONTO</button></div>
+            <button id="party-start" class="btn-primary lobby-action" type="button" disabled>INICIAR PARTIDA <span>↗</span></button>
+          </div>
+        </main>
+        <aside class="party-side party-side-right">
+          <div class="party-aside-title">SOCIAL <span id="online-count">0 ONLINE</span></div>
+          <div class="party-right-description">Convide jogadores que estejam conectados a este servidor.</div>
+          <div class="invite-search"><input id="friend-search" type="text" maxlength="17" placeholder="Buscar pelo codinome" aria-label="Buscar jogador online"/><button id="invite-by-name" type="button">CONVIDAR</button></div>
+          <div class="party-online-heading"><span>JOGADORES E FAVORITOS</span><span>●</span></div>
+          <div id="online-users" class="online-users"></div>
+          <div class="party-social-bottom"><small class="favorite-note">☆ Marque seus favoritos para encontrá-los novamente neste navegador.</small><button id="copy-party-link" class="party-link" type="button">⧉ COPIAR LINK DE CONVITE</button><button id="disconnect-lobby" class="party-exit" type="button">DESCONECTAR DO LOBBY</button></div>
+        </aside>
+      </div>
+      <div class="party-bottom-strip"><span>VECTOR STRIKE <b>// CENTRAL MULTIPLAYER</b></span><span>GRUPO PRIVADO <i>•</i> ATÉ 6 OPERADORES <i>•</i> JOGO ORIGINAL</span></div>
+    </section>
+    <p id="menu-error" class="menu-error" role="status" aria-live="polite"></p>
+    <footer class="menu-footer"><span>VECTOR STRIKE © 2026 • CONCEITO ORIGINAL</span><span>DESENVOLVIDO PARA DESKTOP / CHROME, EDGE E FIREFOX</span></footer>
+  </div>
+</div>
+<script type="module" src="/src/main.js"></script>
+</body>
+</html>

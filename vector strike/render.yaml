@@ -1,0 +1,16 @@
+# Backend multiplayer de instancia unica (Node.js + ws).
+# Para um servidor com menor ping no Brasil, pode trocar de provedor depois.
+services:
+  - type: web
+    name: vector-strike-multiplayer
+    runtime: node
+    region: virginia
+    plan: free
+    buildCommand: npm install --omit=dev --no-audit --no-fund
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_VERSION
+        value: "22.12.0"
+      - key: NODE_ENV
+        value: production

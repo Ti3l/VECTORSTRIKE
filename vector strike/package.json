@@ -1,0 +1,26 @@
+{
+  "name": "vector-strike-v1",
+  "version": "1.9.0",
+  "private": true,
+  "type": "module",
+  "description": "VECTOR STRIKE V1.9 — frontend pronto para Vercel com servidor multiplayer WebSocket configuravel.",
+  "scripts": {
+    "dev": "node tools/dev.mjs",
+    "build": "vite build",
+    "start": "node server/index.js",
+    "online": "node tools/online.mjs",
+    "test": "node --test server/*.test.js src/ws-endpoint.test.js",
+    "check": "node --check src/ws-endpoint.js && node --check server/origin-policy.js && node --check src/net-stats.js && node --check src/main.js && node --check src/shared.js && node --check src/economy.js && node --check src/weapon-models.js && node --check src/viewmodel.js && node --check src/bots.js && node --check src/map-assets.js && node --check src/lobby.js && node --check src/party-ui.js && node --check server/index.js",
+    "deploy:check": "node tools/check-deploy.mjs"
+  },
+  "dependencies": {
+    "three": "^0.187.0",
+    "ws": "^8.23.0"
+  },
+  "devDependencies": {
+    "vite": "^8.3.8"
+  },
+  "engines": {
+    "node": ">=22.12.0"
+  }
+}
